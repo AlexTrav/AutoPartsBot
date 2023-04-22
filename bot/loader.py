@@ -1,4 +1,5 @@
 # Файл загрузчика бота и диспетчера
+import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.contrib.fsm_storage.memory import MemoryStorage

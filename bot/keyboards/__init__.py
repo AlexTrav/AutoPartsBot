@@ -1,4 +1,6 @@
 # Инициализатор модулей клавиатур
 
-from .user_keyboards import *
-from .manager_keyboards import *
+from .user import *
+from .manager import *
+from .courier import *
+from .back_button import *

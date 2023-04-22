@@ -1,8 +1,12 @@
 # Файл класса базы данных
+import logging
 
 import psycopg2
 
 from config.db import host, user, password, db_name
+
+
+logger = logging.getLogger('app.db.database', )
 
 
 # Класс базы данных
@@ -15,18 +19,26 @@ class Database:
 
     # Подключение к бд
     def connect(self):
-        self.conn = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            dbname=db_name
-        )
-        self.cur = self.conn.cursor()
+        try:
+            self.conn = psycopg2.connect(
+                host=host,
+                user=user,
+                password=password,
+                dbname=db_name
+            )
+            self.cur = self.conn.cursor()
+            logger.info('Connection to the database is successful')
+        except Exception as err:
+            logger.error(f'An error has occurred: {err}')
 
     # Закрытие подключения
     def close(self):
-        self.cur.close()
-        self.conn.close()
+        try:
+            self.cur.close()
+            self.conn.close()
+            logger.info('Connection closed successfully')
+        except Exception as err:
+            logger.error(f'An error has occurred: {err}')
 
     # Создание таблиц
     def create_table(self, query):
@@ -46,5 +58,4 @@ class Database:
 
 # Обеькт базы данных
 database_instance = Database()
-# Подключение
-database_instance.connect()
+

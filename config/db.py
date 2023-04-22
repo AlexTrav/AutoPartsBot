@@ -1,6 +1,14 @@
-# Файл хранящий переменные подключения
+# Файл получения переменных подключения
 
-host = "127.0.0.1"
-user = "postgres"
-password = "rootroot"
-db_name = "auto_parts_bot_database"
+
+from os import getenv
+from dotenv import load_dotenv, find_dotenv
+
+
+load_dotenv(find_dotenv())
+
+
+host = getenv('HOST')
+user = getenv('USER')
+password = getenv('PASSWORD')
+db_name = getenv('DB_NAME')
