@@ -4,11 +4,12 @@ from bs4 import BeautifulSoup
 
 from db.database import database_instance
 
+
 urls = {1: "https://www.drom.ru/catalog/bmw/", 2: "https://www.drom.ru/catalog/audi/",
         3: "https://www.drom.ru/catalog/mercedes-benz/", 4: "https://www.drom.ru/catalog/volkswagen/"}
 
 
-def cars_models_main():
+def cars_submodels_main():
     database_instance.connect()
 
     options = webdriver.ChromeOptions()
@@ -18,11 +19,12 @@ def cars_models_main():
 
     driver = webdriver.Chrome()
 
+    i = 0
+
     try:
         driver = webdriver.Chrome(executable_path=chrome_driver_binary,
                                   chrome_options=options)
-
-        i = 0
+        car_model_id = 1
 
         for key in urls:
             driver.get(url=urls[key])
@@ -33,13 +35,27 @@ def cars_models_main():
             cars_models = soup.find_all("a", class_="e64vuai0 css-1i48p5q e104a11t0")
 
             for car_model in cars_models:
-                car_model_name = car_model.text
-                database_instance.execute_query(query=f"INSERT INTO cars_models(car_brand_id, name, name_lc) VALUES ({key}, '{car_model_name}', '{car_model_name.lower()}')")
-                print(f'{i} - {key} : {car_model_name} - Успешно!')
-                i += 1
+
+                link = car_model.get("href")
+                driver.get(link)
+
+                src = driver.page_source
+                soup = BeautifulSoup(src, "lxml")
+
+                cars_submodels = soup.find_all("span", class_="css-1089mxj e1ei9t6a2")
+
+                for car_submodel in cars_submodels:
+                    car_submodel_name = car_submodel.text
+                    car_submodel_name = car_submodel_name.replace("\r", "")
+                    car_submodel_name = car_submodel_name.replace("\n", " ")
+                    database_instance.execute_query(query=f"INSERT INTO cars_submodels(car_model_id, name, name_lc) VALUES ({car_model_id}, '{car_submodel_name}', '{car_submodel_name.lower()}')")
+                    print(f'id:{i} - car_brand_id:{key} : car_model_id:{car_model_id} : {car_submodel_name} - Успешно!')
+                    i += 1
+
+                car_model_id += 1
 
     except Exception as ex:
-        print(f"Исключение: {ex}")
+        print(ex)
 
     finally:
         driver.close()

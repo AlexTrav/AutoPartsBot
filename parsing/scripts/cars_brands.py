@@ -1,38 +1,19 @@
-from selenium import webdriver
-
-import requests as rq
-
-# from bs4 import BeautifulSoup
-
-import time
-
 from db.database import database_instance
 
 
-url = "https://kolesa.kz/zapchasti/prodazha/"
+def cars_brands_main():
+    try:
+        database_instance.connect()
+        database_instance.execute_query(query="INSERT INTO cars_brands(name, name_lc) "
+                                              "VALUES "
+                                              "('BMW', 'bmw'), "
+                                              "('AUDI', 'audi'), "
+                                              "('MERCEDES', 'mercedes'), "
+                                              "('VOLKSWAGEN', 'volkswagen')")
 
+    except Exception as ex:
+        print(f"Исключение: {ex}")
 
-options = webdriver.ChromeOptions()
-options.binary_location = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+    finally:
+        database_instance.close()
 
-chrome_driver_binary = r"C:\Users\Alex\Desktop\Бизнес\Серёга\Проект\AutoPartsBot\v~0.2\parsing\scripts\chromedriver.exe"
-
-
-driver = webdriver.Chrome(chrome_options=options)
-driver.get(chrome_driver_binary)
-
-
-
-headers = {
-
-
-}
-
-try:
-    driver.get(url=url)
-    time.sleep(5)
-except Exception as ex:
-    print(ex)
-finally:
-    driver.close()
-    driver.quit()

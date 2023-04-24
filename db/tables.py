@@ -3,6 +3,10 @@
 from db.database import database_instance
 
 
+# Подключение к бд
+database_instance.connect()
+
+
 # Таблица пользователей
 def users():
     query = '''CREATE TABLE users (
@@ -65,15 +69,28 @@ def cars_models():
     database_instance.create_table(query=query)
 
 
-# Таблица поколений авто
-def cars_generations():
-    query = '''CREATE TABLE cars_generations (
+# Таблица подмоделей авто
+def cars_submodels():
+    query = '''CREATE TABLE cars_submodels (
         id SERIAL PRIMARY KEY,
         car_model_id INTEGER NOT NULL,
         name VARCHAR (100) NOT NULL,
         name_lc VARCHAR (100) NOT NULL,
         is_deleted BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (car_model_id) REFERENCES cars_models (id)
+    );'''
+    database_instance.create_table(query=query)
+
+
+# Таблица модификаций авто
+def cars_modifications():
+    query = '''CREATE TABLE cars_modifications (
+        id SERIAL PRIMARY KEY,
+        car_submodel_id INTEGER NOT NULL,
+        name_configuration VARCHAR NOT NULL,
+        name_lc VARCHAR (100) NOT NULL,
+        is_deleted BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (car_submodel_id) REFERENCES cars_submodels (id)
     );'''
     database_instance.create_table(query=query)
 
@@ -107,17 +124,23 @@ def auto_parts():
     query = '''CREATE TABLE auto_parts (
         id SERIAL PRIMARY KEY,
         subcategory_id INTEGER NOT NULL,
-        car_generation_id INTEGER NOT NULL,
         name VARCHAR (100) NOT NULL,
-        brand VARCHAR (100) NOT NULL,
-        article VARCHAR (100) NOT NULL,
+        brand VARCHAR (100),
+        article VARCHAR (100),
+        description VARCHAR,
         price INTEGER NOT NULL,
-        photo VARCHAR NOT NULL,
+        photo VARCHAR,
         count INTEGER NOT NULL,
         name_lc VARCHAR (100) NOT NULL,
+        suitable_for_models VARCHAR,
+        car_model_id INTEGER,
+        car_submodel_id INTEGER,
+        car_modification_id INTEGER,
         is_deleted BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (subcategory_id) REFERENCES subcategory_auto_parts (id),
-        FOREIGN KEY (car_generation_id) REFERENCES cars_generations (id)
+        FOREIGN KEY (car_model_id) REFERENCES cars_models (id),
+        FOREIGN KEY (car_submodel_id) REFERENCES cars_submodels (id),
+        FOREIGN KEY (car_modification_id) REFERENCES cars_modifications (id)
     );'''
     database_instance.create_table(query=query)
 
@@ -211,27 +234,32 @@ def documents():
 
 
 # Создание таблиц
-# def create_table():
+def create_table():
     # roles()
     # users()
     # workers()
 
     # cars_brands()
     # cars_models()
-    # cars_generations()
+    # cars_submodels()
+    # cars_modifications()
 
     # category_auto_parts()
     # subcategory_auto_parts()
-    # auto_parts()
+    auto_parts()
 
-    # basket()
+    basket()
     # orders()
-    # orders_items()
+    orders_items()
     # delivery()
 
     # documents_types()
-    # documents()
+    documents()
 
 
 # Вызов функции создания таблиц
-# create_table()
+create_table()
+
+
+# Закрытие подключения к бд
+database_instance.close()
