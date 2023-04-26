@@ -145,6 +145,28 @@ def auto_parts():
     database_instance.create_table(query=query)
 
 
+# Таблица подбора автозапчастей
+def selection_auto_parts():
+    query = '''CREATE TABLE selection_auto_parts (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR NOT NULL,
+        name_lc VARCHAR NOT NULL,
+        user_id INTEGER NOT NULL,
+        car_brand_id INTEGER NOT NULL,
+        car_model_id INTEGER NOT NULL,
+        car_submodel_id INTEGER NOT NULL,
+        car_modification_id INTEGER NOT NULL,
+        viewing_status BOOLEAN DEFAULT FALSE,
+        is_deleted BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (user_id) REFERENCES users (id),
+        FOREIGN KEY (car_brand_id) REFERENCES cars_brands (id),
+        FOREIGN KEY (car_model_id) REFERENCES cars_models (id),
+        FOREIGN KEY (car_submodel_id) REFERENCES cars_submodels (id),
+        FOREIGN KEY (car_modification_id) REFERENCES cars_modifications (id)
+    );'''
+    database_instance.create_table(query=query)
+
+
 # Таблица корзины
 def basket():
     query = '''CREATE TABLE basket (
@@ -164,7 +186,7 @@ def orders():
     query = '''CREATE TABLE orders (
         id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL,
-        reg_date TIMESTAMP NOT NULL,
+        reg_date BIGINT NOT NULL,
         is_paid BOOLEAN DEFAULT FALSE,
         is_delivered BOOLEAN DEFAULT FALSE,
         total_price INTEGER NOT NULL,
@@ -246,15 +268,16 @@ def create_table():
 
     # category_auto_parts()
     # subcategory_auto_parts()
-    auto_parts()
+    # auto_parts()
+    # selection_auto_parts()
 
-    basket()
-    # orders()
+    # basket()
+    orders()
     orders_items()
-    # delivery()
+    delivery()
 
     # documents_types()
-    documents()
+    # documents()
 
 
 # Вызов функции создания таблиц

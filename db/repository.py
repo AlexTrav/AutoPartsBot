@@ -49,7 +49,34 @@ def add_basket_auto_part(**kwargs):
     return answer
 
 
+# Подбор автозапчастей
+
+# Добавить заявку на подбор автозапчастей
+def add_selection_auto_parts(**kwargs):
+    database_instance.execute_query(f"INSERT INTO selection_auto_parts(name, name_lc, user_id, car_brand_id, car_model_id, car_submodel_id, car_modification_id) VALUES ('{kwargs['name']}', '{kwargs['name'].lower()}', {kwargs['user_id']}, {kwargs['car_brand_id']}, {kwargs['car_model_id']}, {kwargs['car_submodel_id']}, {kwargs['car_modification_id']})")
+
+
 # Корзина
+
+# Очистить корзину
+def delete_from_user_basket(user_id):
+    database_instance.execute_query(f"DELETE FROM basket WHERE user_id = {user_id}")
+
+
+# Редактирование корзины
+def delete_from_user_basket_item(basket_id):
+    database_instance.execute_query(f"DELETE FROM basket WHERE id = {basket_id}")
+
+
+# Оформление заказа
+def place_in_order(user_id, reg_date, total_price):
+    database_instance.execute_query(f"INSERT INTO orders(user_id, reg_date, total_price) VALUES ({user_id}, {reg_date}, {total_price})")
+    order_id = database_instance.return_select_query(f"SELECT id FROM orders WHERE reg_date = {reg_date}")[0][0]
+    return order_id
+
+
+def place_in_order_item(order_id, user_id, auto_part_id, count, price):
+    database_instance.execute_query(f"INSERT INTO orders_items(order_id, user_id, auto_part_id, count, price) VALUES ({order_id}, {user_id}, {auto_part_id}, {count}, {price})")
 
 
 # Заказы

@@ -12,6 +12,12 @@ class UserStatesGroup(StatesGroup):
     auto_parts = State()
     auto_part = State()
 
+    cars_brands = State()
+    cars_models = State()
+    cars_submodels = State()
+    cars_modifications = State()
+    selection_auto_parts = State()
+
     basket = State()
     edit_basket = State()
 
