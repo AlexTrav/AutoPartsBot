@@ -16,7 +16,7 @@ def users():
         phone INTEGER,
         email VARCHAR (100),
         role_id INTEGER DEFAULT 1,
-        country VARCHAR (200),
+        address_delivery VARCHAR (200),
         is_deleted BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (role_id) REFERENCES roles (id)
     );'''
@@ -36,7 +36,7 @@ def roles():
 # Таблица работников
 def workers():
     query = '''CREATE TABLE workers (
-        user_id INTEGER PRIMARY KEY,
+        user_id INTEGER NOT NULL,
         role_id INTEGER NOT NULL,
         is_deleted BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (user_id) REFERENCES users (id),
@@ -216,11 +216,11 @@ def orders_items():
 # Таблица доставки
 def delivery():
     query = '''CREATE TABLE delivery (
-        worker_id SERIAL PRIMARY KEY,
+        worker_id INTEGER NOT NULL,
         order_id INTEGER NOT NULL,
         is_completed BOOLEAN DEFAULT FALSE,
         is_deleted BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (worker_id) REFERENCES workers (user_id),
+        FOREIGN KEY (worker_id) REFERENCES users (id),
         FOREIGN KEY (order_id) REFERENCES orders (id)
     );'''
     database_instance.create_table(query=query)
@@ -256,7 +256,7 @@ def documents():
 
 
 # Создание таблиц
-def create_table():
+# def create_table():
     # roles()
     # users()
     # workers()
@@ -272,16 +272,16 @@ def create_table():
     # selection_auto_parts()
 
     # basket()
-    orders()
-    orders_items()
-    delivery()
+    # orders()
+    # orders_items()
+    # delivery()
 
     # documents_types()
     # documents()
 
 
 # Вызов функции создания таблиц
-create_table()
+# create_table()
 
 
 # Закрытие подключения к бд

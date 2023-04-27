@@ -22,17 +22,28 @@ class UserStatesGroup(StatesGroup):
     edit_basket = State()
 
     orders = State()
-    order = State()
+    order_items = State()
 
     profile = State()
+    edit_profile = State()
+
+    add_balance = State()
+
+    add__update_phone = State()
+    add__update_address_delivery = State()
 
     search = State()
+    search_by_name = State()
+    search_by_article = State()
 
-    about = State()
+    search_auto_parts = State()
+    search_auto_part = State()
+
+    for_workers = State()
 
 
-# Состояния менеджера
-class ManagerStatesGroup(StatesGroup):
+# Состояния модератора
+class ModeratorStatesGroup(StatesGroup):
     start = State()
 
 

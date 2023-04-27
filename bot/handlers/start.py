@@ -5,9 +5,9 @@ from aiogram.dispatcher import FSMContext
 
 from bot.loader import dp
 
-from bot.states import UserStatesGroup, ManagerStatesGroup, CourierStatesGroup
+from bot.states import UserStatesGroup, ModeratorStatesGroup, CourierStatesGroup
 
-from bot.keyboards import user, manager, courier
+from bot.keyboards import user, moderator, courier
 from bot.keyboards.back_button import *
 
 from db import repository
@@ -26,9 +26,9 @@ async def start_command(message: types.Message, state: FSMContext):
         await message.answer(text=text,
                              reply_markup=kb)
     elif status_id == 2:
-        await ManagerStatesGroup.start.set()
+        await ModeratorStatesGroup.start.set()
         add_state(await state.get_state())
-        text, kb = manager.get_start_kb()
+        text, kb = moderator.get_start_kb()
         await message.answer(text=text,
                              reply_markup=kb)
     elif status_id == 3:
@@ -37,4 +37,3 @@ async def start_command(message: types.Message, state: FSMContext):
         text, kb = courier.get_start_kb()
         await message.answer(text=text,
                              reply_markup=kb)
-

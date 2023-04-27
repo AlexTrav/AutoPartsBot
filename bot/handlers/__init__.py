@@ -3,7 +3,7 @@
 from .start import dp
 
 from .user import dp
-from .manager import dp
+from .moderator import dp
 from .courier import dp
 
 

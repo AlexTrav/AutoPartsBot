@@ -1,10 +1,10 @@
-# Файл обработчик запросов менеджера
+# Файл обработчик запросов модератора
 
 from aiogram import types
 
 from bot.loader import dp
 
-from bot.states import ManagerStatesGroup
+from bot.states import ModeratorStatesGroup
 
 from bot import keyboards
 from db import repository
@@ -14,4 +14,4 @@ from db import repository
 async def set_state():
     state = keyboards.STATES_LIST[-2]
     if state == 'UserStatesGroup:start':
-        await ManagerStatesGroup.start.set()
+        await ModeratorStatesGroup.start.set()

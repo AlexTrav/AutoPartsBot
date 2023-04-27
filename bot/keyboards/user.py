@@ -29,6 +29,24 @@ def get_keyboard(state, **kwargs):
     if state == 'UserStatesGroup:basket':
         return get_basket_kb(kwargs["user_id"])
 
+    if state == 'UserStatesGroup:orders':
+        return get_orders_kb(kwargs["user_id"])
+
+    if state == 'UserStatesGroup:search':
+        return get_search_kb()
+    if state == 'UserStatesGroup:search_by_name':
+        return get_search_by_name_kb()
+    if state == 'UserStatesGroup:search_by_article':
+        return get_search_by_article_kb()
+
+    if state == 'UserStatesGroup:search_auto_parts':
+        return get_search_auto_parts_kb(kwargs['search_message'], kwargs['by'])
+
+    if state == 'UserStatesGroup:profile':
+        return get_profile_kb(kwargs['user_id'])
+    if state == 'UserStatesGroup:edit_profile':
+        return get_edit_profile_kb(kwargs['user_id'])
+
 
 # Клавиатура команды start
 def get_start_kb(user_id):
@@ -37,11 +55,10 @@ def get_start_kb(user_id):
     start_kb = InlineKeyboardMarkup(row_width=1, inline_keyboard=[
         [InlineKeyboardButton(text='Каталог автозапчастей', callback_data=cb.new(action='category_auto_parts'))],
         [InlineKeyboardButton(text='Подбор автозапчастей', callback_data=cb.new(action='selection_auto_parts'))],
+        [InlineKeyboardButton(text='Поиск автозапчастей', callback_data=cb.new(action='search'))],
+        [InlineKeyboardButton(text='Профиль', callback_data=cb.new(action='profile'))],
         [InlineKeyboardButton(text='Корзина', callback_data=cb.new(action='basket'))],
         [InlineKeyboardButton(text='Заказы', callback_data=cb.new(action='orders'))],
-        [InlineKeyboardButton(text='Поиск', callback_data=cb.new(action='search'))],
-        [InlineKeyboardButton(text='Профиль', callback_data=cb.new(action='profile'))],
-        [InlineKeyboardButton(text='О нас', callback_data=cb.new(action='about'))]
     ])
     if database_instance.return_select_query(f'SELECT * FROM workers WHERE user_id = {user_id}'):
         start_kb.add(InlineKeyboardButton(text='Для работников', callback_data=cb.new(action='for_workers')))
@@ -234,26 +251,182 @@ def get_edit_basket_kb(user_id):
 # Заказы
 
 # Клавиатура заказов
-def get_orders_kb():
-    pass
+def get_orders_kb(user_id):
+    cb = CallbackData('orders', 'id', 'action')
+    orders_kb = InlineKeyboardMarkup()
+    text = 'Заказы\nВыберите заказ:'
+    entries = database_instance.return_select_query(f"SELECT * FROM orders WHERE user_id = {user_id} AND is_deleted = false")
+    if len(entries) > 10:
+        for entry in entries[MainPage.entries - 10:MainPage.entries]:
+            reg_date = str(entry[2])[6:8] + '.' + str(entry[2])[4:6] + '.' + str(entry[2])[2:4] + ' ' + str(entry[2])[8:10] + ':' + str(entry[2])[10:]
+            orders_kb.add(InlineKeyboardButton(text=reg_date, callback_data=cb.new(id=entry[0], action='order_items')))
+        orders_kb = add_pagination_to_kb(kb=orders_kb, cb=cb, len_data=len(entries), id_btn=user_id)
+    else:
+        for entry in entries:
+            reg_date = str(entry[2])[6:8] + '.' + str(entry[2])[4:6] + '.' + str(entry[2])[2:4] + ' ' + str(entry[2])[8:10] + ':' + str(entry[2])[10:]
+            orders_kb.add(InlineKeyboardButton(text=reg_date, callback_data=cb.new(id=entry[0], action='order_items')))
+    orders_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
+    return text, orders_kb
+
+
+# Клавиатура заказа
+def get_order_items(order_id):
+    cb = CallbackData('order_items', 'id', 'action')
+    order_items_kb = InlineKeyboardMarkup()
+    text = f'Заказ под номером: {order_id}\n'
+    order = database_instance.return_select_query(f"SELECT * FROM orders WHERE id = {order_id} AND is_deleted = false")[0]
+    entries = database_instance.return_select_query(f"SELECT * FROM orders_items WHERE order_id = {order_id} AND is_deleted = false")
+    all_price, i = 0, 1
+    for entry in entries:
+        auto_part = database_instance.return_select_query(f"SELECT * FROM auto_parts WHERE id = {entry[3]} AND is_deleted = false")[0]
+        text += f'{i}: Наименование: {auto_part[2]}; Количество: {entry[4]}; Цена: {entry[5]}₸\n'
+        all_price += entry[5]
+        i += 1
+    is_paid = 'Оплачен' if order[3] else 'Не оплачен'
+    is_delivered = 'Доставлен' if order[4] else 'Не доставлен'
+    text += f'Статус оплаты: {is_paid}\n'
+    text += f'Статус доставки: {is_delivered}\n'
+    text += f'Общая стоимость: {all_price}₸\n'
+    if not order[3]:
+        order_items_kb.add(InlineKeyboardButton(text='Оплатить', callback_data=cb.new(id=order_id, action='paid')))
+    order_items_kb.add(InlineKeyboardButton(text='Удалить заказ', callback_data=cb.new(id=order_id, action='delete_order')))
+    order_items_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
+    return text, order_items_kb
 
 
 # Поиск
 
 # Клавиатура поиска
 def get_search_kb():
-    pass
+    cb = CallbackData('search', 'action')
+    text = 'Поиск автозапчастей\nВыберите тип поиска:'
+    search_kb = InlineKeyboardMarkup()
+    search_kb.add(InlineKeyboardButton(text='Поиск по наименованию', callback_data=cb.new(action='search_by_name')))
+    search_kb.add(InlineKeyboardButton(text='Поиск по артиклу', callback_data=cb.new(action='search_by_article')))
+    search_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, search_kb
+
+
+# Клавиатура поиска по наименованию
+def get_search_by_name_kb():
+    cb = CallbackData('search_by_name', 'action')
+    text = 'Введите наименование автозапчасти:'
+    search_by_name_kb = InlineKeyboardMarkup()
+    search_by_name_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, search_by_name_kb
+
+
+# Клавиатура поиска по артиклу
+def get_search_by_article_kb():
+    cb = CallbackData('search_by_article', 'action')
+    text = 'Введите артикул автозапчасти:'
+    search_by_article_kb = InlineKeyboardMarkup()
+    search_by_article_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, search_by_article_kb
+
+
+# Клавиатура результата поиска
+def get_search_auto_parts_kb(search_message, by):
+    cb = CallbackData('search_auto_parts', 'id', 'action')
+    search_auto_parts_by_name_kb = InlineKeyboardMarkup()
+    entries = database_instance.return_select_query(f"SELECT * FROM auto_parts WHERE {by} LIKE '%{search_message.lower()}%' AND count > 0 AND is_deleted = false")
+    if len(entries) > 0:
+        text = f'Найдено автозапчастей: {len(entries)}\n'
+        if len(entries) > 10:
+            for entry in entries[MainPage.entries - 10:MainPage.entries]:
+                search_auto_parts_by_name_kb.add(InlineKeyboardButton(text=entry[2], callback_data=cb.new(id=entry[0], action='search_auto_part')))
+            search_auto_parts_by_name_kb = add_pagination_to_kb(kb=search_auto_parts_by_name_kb, cb=cb, len_data=len(entries), id_btn=search_message)
+        else:
+            for entry in entries:
+                search_auto_parts_by_name_kb.add(InlineKeyboardButton(text=entry[2], callback_data=cb.new(id=entry[0], action='search_auto_part')))
+    else:
+        text = 'К сожалению записей не найдено'
+    search_auto_parts_by_name_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
+    return text, search_auto_parts_by_name_kb
 
 
 # Профиль
 
 # Клавиатура профиля
-def get_profile_kb():
-    pass
+def get_profile_kb(user_id):
+    cb = CallbackData('profile', 'action')
+    user = database_instance.return_select_query(f"SELECT * FROM users WHERE id = {user_id}")[0]
+    phone = user[3] if user[3] else 'Не указан'
+    address_delivery = user[6] if user[6] else 'Не указан'
+    text = f'Профиль пользователя: {user[0]}\nПолное имя: {user[1]}\nТелефон: {phone}\nАдрес доставки: {address_delivery}\nБаланс: {user[7]}₸'
+    profile_kb = InlineKeyboardMarkup()
+    profile_kb.add(InlineKeyboardButton(text='Редактировать профиль', callback_data=cb.new(action='update_profile')))
+    profile_kb.add(InlineKeyboardButton(text='Пополнить баланс', callback_data=cb.new(action='add_balance')))
+    profile_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, profile_kb
 
 
-# О нас
+# Клавиатура пополнения баланса
+def get_add_balance_kb():
+    cb = CallbackData('add_balance', 'action')
+    text = 'Для пополнения баланса, обратитесь к одному из модераторов:'
+    add_balance_kb = InlineKeyboardMarkup()
+    entries = database_instance.return_select_query("SELECT * FROM workers WHERE role_id = 2")
+    if len(entries) > 10:
+        for entry in entries:
+            user = database_instance.return_select_query(f"SELECT * FROM users WHERE id = {entry[0]}")[0]
+            url = f'https://t.me/{user[2]}'
+            add_balance_kb.add(InlineKeyboardButton(text=user[1], url=url))
+        add_balance_kb = add_pagination_to_kb(kb=add_balance_kb, cb=cb, len_data=len(entries), id_btn=0)
+    else:
+        for entry in entries:
+            user = database_instance.return_select_query(f"SELECT * FROM users WHERE id = {entry[0]}")[0]
+            url = f'https://t.me/{user[2]}'
+            add_balance_kb.add(InlineKeyboardButton(text=user[1], url=url))
+    add_balance_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, add_balance_kb
 
-# Клавиатура  модуля "О нас"
-def get_about_kb():
-    pass
+
+# Клавиатура редактирования профиля
+def get_edit_profile_kb(user_id):
+    cb = CallbackData('update_profile', 'action')
+    text = 'Выберите действие:'
+    user = database_instance.return_select_query(f"SELECT * FROM users WHERE id = {user_id}")[0]
+    edit_profile_kb = InlineKeyboardMarkup()
+    if not user[3]:
+        edit_profile_kb.add(InlineKeyboardButton(text='Установить телефон', callback_data=cb.new(action='set_phone')))
+    else:
+        edit_profile_kb.add(InlineKeyboardButton(text='Поменять телефон', callback_data=cb.new(action='update_phone')))
+    if not user[6]:
+        edit_profile_kb.add(InlineKeyboardButton(text='Установить адрес доставки', callback_data=cb.new(action='set_address_delivery')))
+    else:
+        edit_profile_kb.add(InlineKeyboardButton(text='Поменять адрес доставки', callback_data=cb.new(action='update_address_delivery')))
+    edit_profile_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, edit_profile_kb
+
+
+# Клавиатура ввода телефона
+def get_add__update_phone_kb():
+    cb = CallbackData('set__update_phone', 'action')
+    text = 'Введите телефон:\nФормат: Только цифры\nПример: 87776665544'
+    add_update_phone_kb = InlineKeyboardMarkup()
+    add_update_phone_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, add_update_phone_kb
+
+
+# Клавиатура ввода адреса
+def get_add__update_address_delivery_kb():
+    cb = CallbackData('set__update_address_delivery', 'action')
+    text = 'Введите адрес доставки:\nФормат: Не более 200 символов'
+    add_update_address_delivery = InlineKeyboardMarkup()
+    add_update_address_delivery.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, add_update_address_delivery
+
+
+# Для работников
+
+# Клавиатура выбора захода
+def get_for_workers_kb():
+    cb = CallbackData('for_workers', 'action')
+    text = 'Выберите действие:'
+    for_workers_kb = InlineKeyboardMarkup()
+    for_workers_kb.add(InlineKeyboardButton(text='Зайти как модератор', callback_data=cb.new(action='log_in_moderator')))
+    for_workers_kb.add(InlineKeyboardButton(text='Зайти как курьер', callback_data=cb.new(action='log_in_courier')))
+    for_workers_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, for_workers_kb
+

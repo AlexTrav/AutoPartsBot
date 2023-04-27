@@ -15,8 +15,8 @@ def get_keyboard(state, **kwargs):
 # Клавиатура команды start
 def get_start_kb():
     text = 'Курьер добро пожаловать в Auto-Parts Bot!'
-    start_manager_kb = InlineKeyboardMarkup(inline_keyboard=[
+    start_moderator_kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text='РАБОТА С ЗАКАЗАМИ', callback_data='work_products')],
         [InlineKeyboardButton(text='ВЫЙТИ', callback_data='exit')]
     ])
-    return text, start_manager_kb
+    return text, start_moderator_kb

@@ -75,23 +75,62 @@ def place_in_order(user_id, reg_date, total_price):
     return order_id
 
 
+# Оформление item-ов заказа
 def place_in_order_item(order_id, user_id, auto_part_id, count, price):
     database_instance.execute_query(f"INSERT INTO orders_items(order_id, user_id, auto_part_id, count, price) VALUES ({order_id}, {user_id}, {auto_part_id}, {count}, {price})")
 
 
 # Заказы
 
+# Удалить заказ
+def delete_order(order_id):
+    database_instance.execute_query(f"UPDATE orders SET is_deleted = true WHERE id = {order_id}")
+    database_instance.execute_query(f"UPDATE orders_items SET is_deleted = true WHERE id = {order_id}")
+    return 'Заказ успешно удалён!'
 
-# Поиск
+
+# Оплата заказа
+def paid_order(user_id, order_id):
+    user = database_instance.return_select_query(f"SELECT * FROM users WHERE id = {user_id}")[0]
+    order = database_instance.return_select_query(f"SELECT * FROM orders WHERE id = {order_id}")[0]
+    if user[7] >= order[5]:
+        if user[3]:
+            if user[6]:
+                database_instance.execute_query(f"UPDATE users SET balance = balance - {order[5]}")
+                order_items = database_instance.return_select_query(f"SELECT * FROM orders_items WHERE order_id = {order_id}")
+                for order_item in order_items:
+                    database_instance.execute_query(f"UPDATE auto_parts SET count = count - {order_item[4]} WHERE id = {3}")
+                database_instance.execute_query(f"UPDATE orders SET is_paid = true WHERE id = {order_id}")
+                database_instance.execute_query(f"INSERT INTO delivery(order_id) VALUES ({order_id})")
+                return 'Заказ успешно оплачен! И отправлен на доставку!'
+            else:
+                return 'Адрес доставки не указан!'
+        else:
+            return 'Телефон не указан!'
+    else:
+        return 'Недостаточно средств для оплаты заказа!'
 
 
 # Профиль
 
+# Обновить номер телефона
+def update_phone(user_id, new_phone):
+    database_instance.execute_query(f"UPDATE users SET phone = {new_phone} WHERE id = {user_id}")
 
-# О нас
+
+# Обновить адрес доставки
+def update_address_delivery(user_id, new_address_delivery):
+    database_instance.execute_query(f"UPDATE users SET address_delivery = '{new_address_delivery}' WHERE id = {user_id}")
 
 
-# Manager
+# Для работников
+
+# Меняет роль пользователя
+def change_role_id(user_id, role_id):
+    database_instance.execute_query(f"UPDATE users SET role_id = {role_id} WHERE id = {user_id}")
+
+
+# Moderator
 
 
 # Courier
