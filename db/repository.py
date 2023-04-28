@@ -132,6 +132,28 @@ def change_role_id(user_id, role_id):
 
 # Moderator
 
+# Пользователи
+
+# Пополнение баланса
+def add_balance(user_id, summa):
+    database_instance.execute_query(f"UPDATE users SET balance = balance + {summa} WHERE id = {user_id}")
+
+
+# Выдача ролей
+def get_role(user_id, action):
+    if action == 'delete_role_moderator':
+        database_instance.execute_query(f"DELETE FROM workers WHERE role_id = 2 AND user_id = {user_id}")
+    elif action == 'add_role_moderator':
+        database_instance.execute_query(f"INSERT INTO workers(user_id, role_id) VALUES ({user_id}, 2)")
+    elif action == 'delete_role_courier':
+        database_instance.execute_query(f"DELETE FROM workers WHERE role_id = 3 AND user_id = {user_id}")
+    elif action == 'add_role_courier':
+        database_instance.execute_query(f"INSERT INTO workers(user_id, role_id) VALUES ({user_id}, 3)")
+
+
+# Данные
+
+# Документы
 
 # Courier
 

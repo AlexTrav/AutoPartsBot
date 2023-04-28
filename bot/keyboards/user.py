@@ -421,12 +421,14 @@ def get_add__update_address_delivery_kb():
 # Для работников
 
 # Клавиатура выбора захода
-def get_for_workers_kb():
+def get_for_workers_kb(user_id):
     cb = CallbackData('for_workers', 'action')
     text = 'Выберите действие:'
     for_workers_kb = InlineKeyboardMarkup()
-    for_workers_kb.add(InlineKeyboardButton(text='Зайти как модератор', callback_data=cb.new(action='log_in_moderator')))
-    for_workers_kb.add(InlineKeyboardButton(text='Зайти как курьер', callback_data=cb.new(action='log_in_courier')))
+    if database_instance.return_select_query(f"SELECT * FROM workers WHERE user_id = {user_id} and role_id = 2"):
+        for_workers_kb.add(InlineKeyboardButton(text='Зайти как модератор', callback_data=cb.new(action='log_in_moderator')))
+    if database_instance.return_select_query(f"SELECT * FROM workers WHERE user_id = {user_id} and role_id = 3"):
+        for_workers_kb.add(InlineKeyboardButton(text='Зайти как курьер', callback_data=cb.new(action='log_in_courier')))
     for_workers_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
     return text, for_workers_kb
 

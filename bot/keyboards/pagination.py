@@ -8,7 +8,7 @@ class MainPage:
     entries = 10
 
 
-def add_pagination_to_kb(kb: InlineKeyboardMarkup, cb: CallbackData, len_data: int, id_btn: int) -> InlineKeyboardMarkup:
+def add_pagination_to_kb(kb: InlineKeyboardMarkup, cb: CallbackData, len_data: int, id_btn) -> InlineKeyboardMarkup:
     if MainPage.entries != 10 and MainPage.entries < len_data:
         kb.add(InlineKeyboardButton(text='←', callback_data=cb.new(id=id_btn, action='left_page')), (InlineKeyboardButton(text='→', callback_data=cb.new(id=id_btn, action='right_page'))))
     else:

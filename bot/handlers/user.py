@@ -102,7 +102,7 @@ async def main_menu(callback: types.CallbackQuery, callback_data: dict, state: F
     if callback_data['action'] == 'for_workers':
         await UserStatesGroup.for_workers.set()
         add_state(await state.get_state())
-        text, kb = keyboards.user.get_for_workers_kb()
+        text, kb = keyboards.user.get_for_workers_kb(callback.from_user.id)
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
 
@@ -711,9 +711,9 @@ async def for_workers(callback: types.CallbackQuery, callback_data: dict):
         delete_all_states()
         change_role_id(callback.from_user.id, 2)
         await callback.message.delete()
-        await callback.message.answer('Вы успешно вошли как модератор!')
+        await callback.message.answer('Вы успешно зашли как модератор!')
     if callback_data['action'] == 'log_in_courier':
         delete_all_states()
         change_role_id(callback.from_user.id, 3)
         await callback.message.delete()
-        await callback.message.answer('Вы успешно вошли как курьер!')
+        await callback.message.answer('Вы успешно зашли как курьер!')
