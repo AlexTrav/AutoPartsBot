@@ -216,7 +216,7 @@ def orders_items():
 # Таблица доставки
 def delivery():
     query = '''CREATE TABLE delivery (
-        worker_id INTEGER NOT NULL,
+        worker_id INTEGER,
         order_id INTEGER NOT NULL,
         is_completed BOOLEAN DEFAULT FALSE,
         is_deleted BOOLEAN DEFAULT FALSE,
@@ -243,10 +243,9 @@ def documents():
         document_type_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
         auto_part_id INTEGER NOT NULL,
-        invoice_date TIMESTAMP NOT NULL,
+        invoice_date BIGINT NOT NULL,
         count INTEGER NOT NULL,
         cost INTEGER NOT NULL,
-        invoice_number INTEGER NOT NULL,
         is_deleted BOOLEAN DEFAULT FALSE,
         FOREIGN KEY (document_type_id) REFERENCES documents_types (id),
         FOREIGN KEY (user_id) REFERENCES users (id),
@@ -256,7 +255,7 @@ def documents():
 
 
 # Создание таблиц
-# def create_table():
+def create_table():
     # roles()
     # users()
     # workers()
@@ -274,14 +273,14 @@ def documents():
     # basket()
     # orders()
     # orders_items()
-    # delivery()
+    delivery()
 
     # documents_types()
     # documents()
 
 
 # Вызов функции создания таблиц
-# create_table()
+create_table()
 
 
 # Закрытие подключения к бд

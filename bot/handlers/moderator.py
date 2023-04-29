@@ -1,4 +1,5 @@
 # Файл обработчик запросов модератора
+from datetime import datetime
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
@@ -37,6 +38,13 @@ async def set_state():
         await ModeratorStatesGroup.datas.set()
     if state == 'ModeratorStatesGroup:data':
         await ModeratorStatesGroup.data.set()
+    if state == 'ModeratorStatesGroup:add_data':
+        await ModeratorStatesGroup.add_data.set()
+
+    if state == 'ModeratorStatesGroup:documents_types':
+        await ModeratorStatesGroup.documents_types.set()
+    if state == 'ModeratorStatesGroup:documents':
+        await ModeratorStatesGroup.documents.set()
 
 
 # Обработчик главного меню
@@ -61,10 +69,9 @@ async def main_menu(callback: types.CallbackQuery, callback_data: dict, state: F
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
     if callback_data['action'] == 'documents':
-        reset_main_page_entries()
-        await ModeratorStatesGroup.documents.set()
+        await ModeratorStatesGroup.documents_types.set()
         add_state(await state.get_state())
-        text, kb = keyboards.moderator.get_documents_kb()
+        text, kb = keyboards.moderator.get_documents_types_kb()
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
     if callback_data['action'] == 'exit':
@@ -286,10 +293,11 @@ async def select_subdata(callback: types.CallbackQuery, callback_data: dict, sta
 
 # Обработчик возвращения из добавления записи данных
 @dp.callback_query_handler(CallbackData('add_data', 'action').filter(), state=ModeratorStatesGroup.add_data)
-async def back_add_data(callback: types.CallbackQuery, callback_data: dict):
+async def back_add_data(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
     if callback_data['action'] == 'back':
         await set_state()
-        text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2])
+        async with state.proxy() as data:
+            text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2], action=data['action_datas'])
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
         delete_state()
@@ -298,11 +306,80 @@ async def back_add_data(callback: types.CallbackQuery, callback_data: dict):
 # Обработчик принимающий сообщения для добавления записи данных
 @dp.message_handler(content_types=['text'], state=ModeratorStatesGroup.add_data)
 async def add_data(message: types.Message, state: FSMContext):
-    pass
+    async with state.proxy() as data:
+        if data['action_datas'] == 'category_auto_parts' or data['action_datas'] == 'cars_brands':
+            if message.text.count('\n') == 0:
+                message_data = [message.text]
+                add_data_repository(table=data['action_datas'], key=0, data=message_data)
+                await message.answer('Успешно')
+                delete_state()
+                await ModeratorStatesGroup.data.set()
+                text, kb = keyboards.moderator.get_data_kb(data['action_datas'])
+                await message.answer(text=text,
+                                     reply_markup=kb)
+            else:
+                await message.answer('Неверный ввод данных!')
+        if data['action_datas'] == 'subcategory_auto_parts' or data['action_datas'] == 'cars_models' or data['action_datas'] == 'cars_submodels' or data['action_datas'] == 'cars_modifications':
+            if message.text.count('\n') == 0:
+                message_data = [message.text]
+                data['message_data'] = message_data
+                await ModeratorStatesGroup.set_key_for_add_data.set()
+                add_state(await state.get_state())
+                text, kb = keyboards.moderator.get_set_key_for_add_data_kb(data['action_datas'])
+                await message.answer(text=text,
+                                     reply_markup=kb)
+            else:
+                await message.answer('Неверный ввод данных!')
+        if data['action_datas'] == 'auto_parts':
+            if message.text.count('\n') == 6:
+                message_data = message.text.split('\n')
+                if message_data[4].isdigit() and message_data[6].isdigit():
+                    data['message_data'] = message_data
+                    await ModeratorStatesGroup.set_key_for_add_data.set()
+                    add_state(await state.get_state())
+                    text, kb = keyboards.moderator.get_set_key_for_add_data_kb(data['action_datas'])
+                    await message.answer(text=text,
+                                         reply_markup=kb)
+                else:
+                    await message.answer('Неверный ввод данных, цена и количество должны быть числом!')
+            else:
+                await message.answer('Неверный ввод данных!')
+
+
+# Обработчик выбора ключа для добавления данных
+@dp.callback_query_handler(CallbackData('set_key_for_add_data', 'id', 'action').filter(), state=ModeratorStatesGroup.set_key_for_add_data)
+async def set_key_for_add_data(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    if callback_data['action'] == 'back':
+        await set_state()
+        async with state.proxy() as data:
+            text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2], action=data['action_datas'])
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb)
+        delete_state()
+    if callback_data['action'] == 'left_page' or callback_data['action'] == 'right_page':
+        change_page(callback_data['action'])
+        async with state.proxy() as data:
+            text, kb = keyboards.moderator.get_set_key_for_add_data_kb(data['action_datas'])
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb)
+    if callback_data['action'] == 'key':
+        async with state.proxy() as data:
+            add_data_repository(table=data['action_datas'], key=callback_data['id'], data=data['message_data'])
+            if data['action_datas'] == 'auto_parts':
+                auto_part = database_instance.return_select_query(f"SELECT * FROM auto_parts WHERE name = '{data['message_data'][0]}'")[0]
+                invoice_date = datetime.now().strftime("%Y%m%d%H%M")
+                add_document_arrival_auto_parts(callback.from_user.id, auto_part[0], invoice_date, data['message_data'][6], data['message_data'][4])
+            await callback.message.answer('Успешно')
+            delete_state()
+            delete_state()
+            await ModeratorStatesGroup.data.set()
+            text, kb = keyboards.moderator.get_data_kb(data['action_datas'])
+            await callback.message.answer(text=text,
+                                          reply_markup=kb)
 
 
 # Обработчик выбора действие с записью
-@dp.callback_query_handler(CallbackData('subdata', 'action').filter(), state=ModeratorStatesGroup.subdata)
+@dp.callback_query_handler(CallbackData('subdata', 'id', 'action').filter(), state=ModeratorStatesGroup.subdata)
 async def subdata(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
     if callback_data['action'] == 'back':
         await set_state()
@@ -311,44 +388,62 @@ async def subdata(callback: types.CallbackQuery, callback_data: dict, state: FSM
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
         delete_state()
-    if callback_data['action'] == '':
-        pass
-    if callback_data['action'] == '':
-        pass
+    if callback_data['action'] == 'delete_subdata':
+        async with state.proxy() as data:
+            delete_subdata(data['action_datas'], callback_data['id'])
+            await callback.answer('Запись успешно удалена!')
+            text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2], action=data['action_datas'])
+        await set_state()
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb)
+        delete_state()
 
 
-# Обработчик выбора поля для редактирования записи данных
-@dp.callback_query_handler(CallbackData('edit_subdata', 'action').filter(), state=ModeratorStatesGroup.edit_subdata)
-async def edit_subdata(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
+# Документы
+
+# Обработчик выбора типа документов
+@dp.callback_query_handler(CallbackData('documents_types', 'id', 'action').filter(), state=ModeratorStatesGroup.documents_types)
+async def select_document_type(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
     if callback_data['action'] == 'back':
         await set_state()
-        async with state.proxy() as data:
-            text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2], action=data['action_datas'], subdata_id=data['subdata_id'])
+        text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2])
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
         delete_state()
     else:
+        await ModeratorStatesGroup.documents.set()
+        add_state(await state.get_state())
         async with state.proxy() as data:
-            data['edit_field'] = callback_data['action']
-        pass
+            data['document_type_id'] = callback_data['id']
+        text, kb = keyboards.moderator.get_documents_kb(callback_data['id'])
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb)
 
 
-# Обработчик возвращения из редактирования поля записи данных
-@dp.callback_query_handler(CallbackData('edit_field_subdata', 'action').filter(), state=ModeratorStatesGroup.edit_field_subdata)
-async def back_edit_field_subdata(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
+# Обработчик выбора документа
+@dp.callback_query_handler(CallbackData('documents', 'id', 'action').filter(), state=ModeratorStatesGroup.documents)
+async def select_document(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
     if callback_data['action'] == 'back':
         await set_state()
-        async with state.proxy() as data:
-            text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2], action=data['action_datas'], subdata_id=data['subdata_id'])
+        text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2])
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
         delete_state()
+    if callback_data['action'] == 'document':
+        await ModeratorStatesGroup.document.set()
+        add_state(await state.get_state())
+        text, kb = keyboards.moderator.get_document_kb(callback_data['id'])
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb)
 
 
-# Обработчик принимающий сообщения для редактирования поля записи данных
-@dp.message_handler(content_types=['text'], state=ModeratorStatesGroup.edit_field_subdata)
-async def add_data(message: types.Message, state: FSMContext):
-    pass
-
-
-# Документы
+# Обработчик возвращения из документа:
+@dp.callback_query_handler(CallbackData('document', 'action').filter(), state=ModeratorStatesGroup.document)
+async def back_document(callback: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    if callback_data['action'] == 'back':
+        await set_state()
+        async with state.proxy() as data:
+            text, kb = keyboards.moderator.get_keyboard(STATES_LIST[-2], document_type_id=data['document_type_id'])
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb)
+        delete_state()

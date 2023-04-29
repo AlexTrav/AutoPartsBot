@@ -59,52 +59,10 @@ class ModeratorStatesGroup(StatesGroup):
 
     data = State()
     add_data = State()
+    set_key_for_add_data = State()
     subdata = State()
-    edit_subdata = State()
-    edit_field_subdata = State()
 
-    # category_auto_parts = State()
-    # add_category_auto_part = State()
-    # category_auto_part = State()
-    # edit_category_auto_part = State()
-    # edit_field_category_auto_part = State()
-
-    # subcategory_auto_parts = State()
-    # add_subcategory_auto_part = State()
-    # subcategory_auto_part = State()
-    # edit_subcategory_auto_part = State()
-    # edit_field_subcategory_auto_part = State()
-
-    # auto_parts = State()
-    # add_auto_part = State()
-    # auto_part = State()
-    # edit_auto_part = State()
-    # edit_field_auto_part = State()
-
-    # cars_brands = State()
-    # add_car_brand = State()
-    # car_brand = State()
-    # edit_car_brand = State()
-    # edit_field_car_brand = State()
-
-    # cars_models = State()
-    # add_car_model = State()
-    # car_model = State()
-    # edit_car_model = State()
-    # edit_field_car_model = State()
-
-    # cars_submodels = State()
-    # add_car_submodel = State()
-    # car_submodel = State()
-    # edit_car_submodel = State()
-    # edit_field_car_submodel = State()
-
-    # cars_modifications = State()
-    # add_car_modification = State()
-    # car_modification = State()
-    # edit_car_modification = State()
-    # edit_field_car_modification = State()
-
+    documents_types = State()
     documents = State()
     document = State()
 

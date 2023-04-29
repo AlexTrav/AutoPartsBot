@@ -1,4 +1,5 @@
 # Файл содержащий функции для взаимодействия с базой данных
+from datetime import datetime
 
 from db.database import database_instance
 
@@ -85,7 +86,7 @@ def place_in_order_item(order_id, user_id, auto_part_id, count, price):
 # Удалить заказ
 def delete_order(order_id):
     database_instance.execute_query(f"UPDATE orders SET is_deleted = true WHERE id = {order_id}")
-    database_instance.execute_query(f"UPDATE orders_items SET is_deleted = true WHERE id = {order_id}")
+    database_instance.execute_query(f"UPDATE orders_items SET is_deleted = true WHERE order_id = {order_id}")
     return 'Заказ успешно удалён!'
 
 
@@ -99,7 +100,9 @@ def paid_order(user_id, order_id):
                 database_instance.execute_query(f"UPDATE users SET balance = balance - {order[5]}")
                 order_items = database_instance.return_select_query(f"SELECT * FROM orders_items WHERE order_id = {order_id}")
                 for order_item in order_items:
-                    database_instance.execute_query(f"UPDATE auto_parts SET count = count - {order_item[4]} WHERE id = {3}")
+                    database_instance.execute_query(f"UPDATE auto_parts SET count = count - {order_item[4]} WHERE id = {order_item[3]}")
+                    invoice_date = datetime.now().strftime("%Y%m%d%H%M")
+                    add_document_departure_auto_parts(user_id, order_item[3], invoice_date, order_item[4], order_item[5])
                 database_instance.execute_query(f"UPDATE orders SET is_paid = true WHERE id = {order_id}")
                 database_instance.execute_query(f"INSERT INTO delivery(order_id) VALUES ({order_id})")
                 return 'Заказ успешно оплачен! И отправлен на доставку!'
@@ -153,7 +156,40 @@ def get_role(user_id, action):
 
 # Данные
 
+# Добавление данных
+def add_data_repository(table, key, data):
+    if table == 'category_auto_parts':
+        database_instance.execute_query(f"INSERT INTO category_auto_parts(name, name_lc) VALUES('{data[0]}', '{data[0].lower()}')")
+    if table == 'subcategory_auto_parts':
+        database_instance.execute_query(f"INSERT INTO subcategory_auto_parts(category_id, name, name_lc) VALUES({key}, '{data[0]}', '{data[0].lower()}')")
+    if table == 'auto_parts':
+        database_instance.execute_query(f"INSERT INTO auto_parts(subcategory_id, name, brand, article, description, price, photo, count, name_lc) VALUES({key}, '{data[0]}', '{data[1]}', '{data[2]}', '{data[3]}', '{data[4]}', '{data[5]}', '{data[6]}', '{data[0].lower()}')")
+    if table == 'cars_brands':
+        database_instance.execute_query(f"INSERT INTO cars_brands(name, name_lc) VALUES('{data[0]}', '{data[0].lower()}')")
+    if table == 'cars_models':
+        database_instance.execute_query(f"INSERT INTO cars_models(car_brand_id, name, name_lc) VALUES({key}, '{data[0]}', '{data[0].lower()}')")
+    if table == 'cars_submodels':
+        database_instance.execute_query(f"INSERT INTO cars_submodels(car_model_id, name, name_lc) VALUES({key}, '{data[0]}', '{data[0].lower()}')")
+    if table == 'cars_modifications':
+        database_instance.execute_query(f"INSERT INTO cars_modifications(car_submodel_id, name, name_lc) VALUES({key}, '{data[0]}', '{data[0].lower()}')")
+
+
+# Удаление данных:
+def delete_subdata(table, subdata_id):
+    database_instance.execute_query(f'UPDATE {table} SET is_deleted = true WHERE id = {subdata_id}')
+
+
 # Документы
+
+# Добавить документ о прибытие автозапчастей
+def add_document_arrival_auto_parts(user_id, auto_part_id, invoice_date, count, price):
+    database_instance.execute_query(f'INSERT INTO documents(document_type_id, user_id, auto_part_id, invoice_date, count, price) VALUES (1, {user_id}, {auto_part_id}, {invoice_date}, {count}, {price})')
+
+
+# Добавить документ о убытие автозапчастей
+def add_document_departure_auto_parts(user_id, auto_part_id, invoice_date, count, price):
+    database_instance.execute_query(f'INSERT INTO documents(document_type_id, user_id, auto_part_id, invoice_date, count, price) VALUES (2, {user_id}, {auto_part_id}, {invoice_date}, {count}, {price})')
+
 
 # Courier
 

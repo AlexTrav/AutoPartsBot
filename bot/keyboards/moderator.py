@@ -26,6 +26,13 @@ def get_keyboard(state, **kwargs):
         return get_datas_kb()
     if state == 'ModeratorStatesGroup:data':
         return get_data_kb(kwargs['action'])
+    if state == 'ModeratorStatesGroup:add_data':
+        return get_add_data_kb(kwargs['action'])
+
+    if state == 'ModeratorStatesGroup:documents_types':
+        return get_documents_types_kb()
+    if state == 'ModeratorStatesGroup:documents':
+        return get_documents_kb(kwargs['document_type_id'])
 
 
 # Клавиатура команды start
@@ -189,20 +196,19 @@ def get_data_kb(action):
     text = 'Выберите запись или действие:'
     data_kb = InlineKeyboardMarkup()
     entries = database_instance.return_select_query(f"SELECT * FROM {action} WHERE is_deleted = false")
-    action_name = action[:1] + action[1:5].replace('s', '') + action[5:-1]
     if len(entries) > 10:
         for entry in entries[MainPage.entries - 10:MainPage.entries]:
             if action == 'category_auto_parts' or action == 'cars_brands':
-                data_kb.add(InlineKeyboardButton(text=entry[1], callback_data=cb.new(id=entry[0], action=action_name)))
+                data_kb.add(InlineKeyboardButton(text=entry[1], callback_data=cb.new(id=entry[0], action='subdata')))
             else:
-                data_kb.add(InlineKeyboardButton(text=entry[2], callback_data=cb.new(id=entry[0], action=action_name)))
+                data_kb.add(InlineKeyboardButton(text=entry[2], callback_data=cb.new(id=entry[0], action='subdata')))
         data_kb = add_pagination_to_kb(kb=data_kb, cb=cb, len_data=len(entries), id_btn=0)
     else:
         for entry in entries:
             if action == 'category_auto_parts' or action == 'cars_brands':
-                data_kb.add(InlineKeyboardButton(text=entry[1], callback_data=cb.new(id=entry[0], action=action_name)))
+                data_kb.add(InlineKeyboardButton(text=entry[1], callback_data=cb.new(id=entry[0], action='subdata')))
             else:
-                data_kb.add(InlineKeyboardButton(text=entry[2], callback_data=cb.new(id=entry[0], action=action_name)))
+                data_kb.add(InlineKeyboardButton(text=entry[2], callback_data=cb.new(id=entry[0], action='subdata')))
     data_kb.add(InlineKeyboardButton(text='Добавить запись', callback_data=cb.new(id=-2, action='add_data')))
     data_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
     return text, data_kb
@@ -210,31 +216,128 @@ def get_data_kb(action):
 
 # Клавиатура добавление данных
 def get_add_data_kb(action):
-    pass
+    cb = CallbackData('add_data', 'action')
+    add_data_kb = InlineKeyboardMarkup()
+    text = ''
+    if action == 'category_auto_parts':
+        text = 'Добавление категории автозапчастей\nВведите наименование категории:'
+    if action == 'subcategory_auto_parts':
+        text = 'Добавление подкатегории автозапчастей\nВведите наименование подкатегории:'
+    if action == 'auto_parts':
+        text = 'Добавление автозапчасти\nВведите наименование, производителя, артикул, описание, цену, фото и количество автозапчасти:\nКаждое поле с новой строки!'
+    if action == 'cars_brands':
+        text = 'Добавление брэнда авто:\nВведите наименование брэнда авто:'
+    if action == 'cars_models':
+        text = 'Добавление модели авто:\nВведите наименование модели авто:'
+    if action == 'cars_submodels':
+        text = 'Добавление конфигурации авто:\nВведите наименование конфигурации авто:'
+    if action == 'cars_modifications':
+        text = 'Добавление модификации авто:\nВведите наименование модификации авто:'
+    add_data_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, add_data_kb
+
+
+# Клавиатура выбора ключа для добавления данных
+def get_set_key_for_add_data_kb(action):
+    subaction = ''
+    if action == 'subcategory_auto_parts':
+        subaction = 'category_auto_parts'
+    if action == 'auto_parts':
+        subaction = 'subcategory_auto_parts'
+    if action == 'cars_models':
+        subaction = 'cars_brands'
+    if action == 'cars_submodels':
+        subaction = 'cars_models'
+    if action == 'cars_modifications':
+        subaction = 'cars_submodels'
+    cb = CallbackData('set_key_for_add_data', 'id', 'action')
+    text = 'Выберите ключ:'
+    data_key_kb = InlineKeyboardMarkup()
+    entries = database_instance.return_select_query(f"SELECT * FROM {subaction} WHERE is_deleted = false")
+    if len(entries) > 10:
+        for entry in entries[MainPage.entries - 10:MainPage.entries]:
+            if subaction == 'category_auto_parts' or subaction == 'cars_brands':
+                data_key_kb.add(InlineKeyboardButton(text=f'{entry[0]}:{entry[1]}', callback_data=cb.new(id=entry[0], action='key')))
+            else:
+                data_key_kb.add(InlineKeyboardButton(text=f'{entry[0]}:{entry[2]}', callback_data=cb.new(id=entry[0], action='key')))
+        data_key_kb = add_pagination_to_kb(kb=data_key_kb, cb=cb, len_data=len(entries), id_btn=0)
+    else:
+        for entry in entries:
+            if subaction == 'category_auto_parts' or subaction == 'cars_brands':
+                data_key_kb.add(InlineKeyboardButton(text=f'{entry[0]}:{entry[1]}', callback_data=cb.new(id=entry[0], action='key')))
+            else:
+                data_key_kb.add(InlineKeyboardButton(text=f'{entry[0]}:{entry[2]}', callback_data=cb.new(id=entry[0], action='key')))
+    data_key_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
+    return text, data_key_kb
 
 
 # Клавитура записи данных
 def get_subdata_kb(action, subdata_id):
-    pass
-
-
-# Клавиатура изменения записи данных
-def get_edit_subdata_kb(action):
-    pass
-
-
-# Клавиатура изменения поля записи данных
-def get_edit_field_subdata_kb(action, subdata_id):
-    pass
+    cb = CallbackData('subdata', 'id', 'action')
+    subdata_kb = InlineKeyboardMarkup()
+    subdata = database_instance.return_select_query(f"SELECT * FROM {action} WHERE id = {subdata_id}")[0]
+    text = ''
+    if action == 'category_auto_parts':
+        text = f'Категория автозапчастей:\nКлюч: {subdata[0]}\nНаименование: {subdata[1]}'
+    if action == 'subcategory_auto_parts':
+        text = f'Подкатегория автозапчастей:\nКлюч: {subdata[0]}\nКлюч категории: {subdata[1]}\nНаименование: {subdata[2]}'
+    if action == 'auto_parts':
+        text = f'Автозапчасть:\nКлюч: {subdata[0]}\nКлюч подкатегории: {subdata[1]}\nНаименование: {subdata[2]}\nПроизводитель: {subdata[3]}\nАртикул: {subdata[4]}\nОписание: {subdata[5]}\nЦена: {subdata[6]}\nФото: {subdata[7]}\nКоличество на складу: {subdata[8]}'
+    if action == 'cars_brands':
+        text = f'Брэнд авто:\nКлюч: {subdata[0]}\nНаименование: {subdata[1]}'
+    if action == 'cars_models':
+        text = f'Модель авто:\nКлюч: {subdata[0]}\nКлюч бренда авто: {subdata[1]}\nНаименование: {subdata[2]}'
+    if action == 'cars_submodels':
+        text = f'Конфигурация авто:\nКлюч: {subdata[0]}\nКлюч модели авто: {subdata[1]}\nНаименование: {subdata[2]}'
+    if action == 'cars_modifications':
+        text = f'Модификация авто:\nКлюч: {subdata[0]}\nКлюч конфигурации авто: {subdata[1]}\nНаименование: {subdata[2]}'
+    subdata_kb.add(InlineKeyboardButton(text='Удалить запись', callback_data=cb.new(id=subdata_id, action='delete_subdata')))
+    subdata_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
+    return text, subdata_kb
 
 
 # Документы
 
+# Клавиатура выбора типа документов
+def get_documents_types_kb():
+    cb = CallbackData('documents_types', 'id', 'action')
+    text = 'Выберите тип документов:'
+    documents_types_kb = InlineKeyboardMarkup()
+    documents_types_kb.add(InlineKeyboardButton(text='Прибытие автозапчастей', callback_data=cb.new(id=1, action='arrival_auto_parts')))
+    documents_types_kb.add(InlineKeyboardButton(text='Убытие автозапчастей', callback_data=cb.new(id=2, action='departure_auto_parts')))
+    documents_types_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
+    return text, documents_types_kb
+
+
 # Клавиатура работы с документами
-def get_documents_kb():
-    pass
+def get_documents_kb(document_type_id):
+    cb = CallbackData('documents', 'id', 'action')
+    text = 'Выберите документ:'
+    documents_kb = InlineKeyboardMarkup()
+    entries = database_instance.return_select_query(f"SELECT * FROM documents WHERE document_type_id = {document_type_id}")
+    if len(entries) > 10:
+        for entry in entries[MainPage.entries - 10:MainPage.entries]:
+            reg_date = str(entry[4])[6:8] + '.' + str(entry[4])[4:6] + '.' + str(entry[4])[2:4] + ' ' + str(entry[4])[8:10] + ':' + str(entry[4])[10:]
+            documents_kb.add(InlineKeyboardButton(text=reg_date, callback_data=cb.new(id=entry[0], action='document')))
+        documents_kb = add_pagination_to_kb(kb=documents_kb, cb=cb, len_data=len(entries), id_btn=0)
+    else:
+        for entry in entries:
+            reg_date = str(entry[4])[6:8] + '.' + str(entry[4])[4:6] + '.' + str(entry[4])[2:4] + ' ' + str(entry[4])[8:10] + ':' + str(entry[4])[10:]
+            documents_kb.add(InlineKeyboardButton(text=reg_date, callback_data=cb.new(id=entry[0], action='document')))
+    documents_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
+    return text, documents_kb
 
 
 # Клавиатура документа
-def get_document_kb():
-    pass
+def get_document_kb(document_id):
+    cb = CallbackData('document', 'action')
+    document = database_instance.return_select_query(f"SELECT * FROM documents WHERE id = {document_id}")[0]
+    type_document = 'Прибытие товара' if document[1] == 1 else 'Убытие товара'
+    user = database_instance.return_select_query(f"SELECT * FROM users WHERE id = {document[2]}")[0]
+    url = f'https://t.me/{user[2]}'
+    auto_part = database_instance.return_select_query(f"SELECT * FROM auto_parts WHERE id = {document[3]}")[0]
+    reg_data = str(document[4])[6:8] + '.' + str(document[4])[4:6] + '.' + str(document[4])[2:4] + ' ' + str(document[4])[8:10] + ':' + str(document[4])[10:]
+    text = f"Документ: {document[0]}\nТип документа: {type_document}\nВыполненно пользователем: {user[1]}\nСсылка на пользователя: {url}\nАвтозапчасть: {auto_part[2]}\nДата добавления документа: {reg_data}\nКоличество: {document[5]}\nЦена: {document[6]}"
+    document_kb = InlineKeyboardMarkup()
+    document_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(action='back')))
+    return text, document_kb
