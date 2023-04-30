@@ -87,6 +87,7 @@ def place_in_order_item(order_id, user_id, auto_part_id, count, price):
 def delete_order(order_id):
     database_instance.execute_query(f"UPDATE orders SET is_deleted = true WHERE id = {order_id}")
     database_instance.execute_query(f"UPDATE orders_items SET is_deleted = true WHERE order_id = {order_id}")
+    database_instance.execute_query(f"UPDATE delivery SET is_deleted = true WHERE order_id = {order_id}")
     return 'Заказ успешно удалён!'
 
 
@@ -193,4 +194,9 @@ def add_document_departure_auto_parts(user_id, auto_part_id, invoice_date, count
 
 # Courier
 
+# Заказы на доставку
 
+# Доставил заказ
+def delivered_order(worker_id, order_id):
+    database_instance.execute_query(f'UPDATE orders SET is_delivered = true WHERE id = {order_id}')
+    database_instance.execute_query(f'UPDATE delivery SET worker_id = {worker_id}, is_completed = true WHERE order_id = {order_id}')

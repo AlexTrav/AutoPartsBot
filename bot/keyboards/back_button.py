@@ -18,5 +18,4 @@ def delete_state():
 
 # Удалить все состояния
 def delete_all_states():
-    if not STATES_LIST:
-        STATES_LIST.clear()
+    STATES_LIST.clear()

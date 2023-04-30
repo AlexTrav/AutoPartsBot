@@ -70,3 +70,6 @@ class ModeratorStatesGroup(StatesGroup):
 # Состояния курьера
 class CourierStatesGroup(StatesGroup):
     start = State()
+
+    orders_for_delivery = State()
+    order_for_delivery = State()

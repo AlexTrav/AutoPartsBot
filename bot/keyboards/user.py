@@ -289,7 +289,7 @@ def get_order_items(order_id):
     text += f'Общая стоимость: {all_price}₸\n'
     if not order[3]:
         order_items_kb.add(InlineKeyboardButton(text='Оплатить', callback_data=cb.new(id=order_id, action='paid')))
-    order_items_kb.add(InlineKeyboardButton(text='Удалить заказ', callback_data=cb.new(id=order_id, action='delete_order')))
+        order_items_kb.add(InlineKeyboardButton(text='Удалить заказ', callback_data=cb.new(id=order_id, action='delete_order')))
     order_items_kb.add(InlineKeyboardButton(text='<<', callback_data=cb.new(id=-1, action='back')))
     return text, order_items_kb
 
