@@ -12,9 +12,8 @@ def check_user(**kwargs):
     if not users:
         database_instance.execute_query(query=f"INSERT INTO users(id, fullname, username) VALUES ({kwargs['user_id']}, '{kwargs['fullname']}', '{kwargs['username']}')")
     else:
-        user = database_instance.return_select_query(query=f'SELECT * FROM users WHERE id = {kwargs["user_id"]}')
-        if not user:
-            database_instance.execute_query(query=f'INSERT INTO users(id, fullname, username) VALUES ({kwargs["user_id"]}, "{kwargs["fullname"]}", "{kwargs["username"]}")')
+        if not database_instance.return_select_query(query=f'SELECT * FROM users WHERE id = {kwargs["user_id"]}'):
+            database_instance.execute_query(query=f"INSERT INTO users(id, fullname, username) VALUES ({kwargs['user_id']}, '{kwargs['fullname']}', '{kwargs['username']}')")
 
 
 # Возвращает id роли

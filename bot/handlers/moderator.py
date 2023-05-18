@@ -411,6 +411,7 @@ async def select_document_type(callback: types.CallbackQuery, callback_data: dic
                                          reply_markup=kb)
         delete_state()
     else:
+        reset_main_page_entries()
         await ModeratorStatesGroup.documents.set()
         add_state(await state.get_state())
         async with state.proxy() as data:
@@ -429,6 +430,12 @@ async def select_document(callback: types.CallbackQuery, callback_data: dict, st
         await callback.message.edit_text(text=text,
                                          reply_markup=kb)
         delete_state()
+    if callback_data['action'] == 'left_page' or callback_data['action'] == 'right_page':
+        change_page(callback_data['action'])
+        async with state.proxy() as data:
+            text, kb = keyboards.moderator.get_documents_kb(data['document_type_id'])
+        await callback.message.edit_text(text=text,
+                                         reply_markup=kb)
     if callback_data['action'] == 'document':
         await ModeratorStatesGroup.document.set()
         add_state(await state.get_state())

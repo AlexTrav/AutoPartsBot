@@ -255,7 +255,7 @@ def documents():
 
 
 # Создание таблиц
-def create_table():
+# def create_table():
     # roles()
     # users()
     # workers()
@@ -273,14 +273,14 @@ def create_table():
     # basket()
     # orders()
     # orders_items()
-    delivery()
+    # delivery()
 
     # documents_types()
     # documents()
 
 
 # Вызов функции создания таблиц
-create_table()
+# create_table()
 
 
 # Закрытие подключения к бд

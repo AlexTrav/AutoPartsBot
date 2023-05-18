@@ -17,7 +17,10 @@ from db import repository
 @dp.message_handler(commands=['start'], state='*')
 async def start_command(message: types.Message, state: FSMContext):
     delete_all_states()
-    repository.check_user(user_id=message.from_user.id, fullname=message.from_user.first_name + ' ' + message.from_user.last_name, username=message.from_user.username)
+    if message.from_user.first_name and message.from_user.last_name:
+        repository.check_user(user_id=message.from_user.id, fullname=message.from_user.first_name + ' ' + message.from_user.last_name, username=message.from_user.username)
+    else:
+        repository.check_user(user_id=message.from_user.id, fullname=message.from_user.first_name, username=message.from_user.username)
     status_id = repository.get_role_id(user_id=message.from_user.id)
     if status_id == 1:
         await UserStatesGroup.start.set()
